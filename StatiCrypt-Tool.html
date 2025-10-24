@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Парольная Защита GitHub Pages</title>
+    <!-- Подключение Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+        body{background-color:#0F0F1B;color:#E0E6F0;font-family:'Inter',sans-serif;transition:background-color 0.5s ease;}
+        .accent-glow-text{text-shadow:0 0 5px rgba(99,102,241,0.5),0 0 15px rgba(124,58,237,0.4);}
+        .futuristic-card{background-color:#1A1A2E;border:1px solid #3A3A55;box-shadow:0 4px 20px rgba(0,0,0,0.4);transition:transform 0.3s ease,box-shadow 0.3s ease;}
+        .futuristic-card:hover{transform:translateY(-5px);box-shadow:0 8px 30px rgba(124,58,237,0.2),0 0 15px rgba(99,102,241,0.4);}
+        .step-number{display:flex;justify-content:center;align-items:center;width:2.5rem;aspect-ratio:1 / 1;border-radius:9999px;font-weight:900;color:#fff;background:linear-gradient(135deg,#3B82F6,#8B5CF6);box-shadow:0 0 10px rgba(124,58,237,0.7);flex-shrink:0;font-size:1.25rem;}
+        .code-block{font-family:'JetBrains Mono',monospace;background-color:#000000;border:1px solid #3A3A55;color:#4ade80;box-shadow:0 0 15px rgba(0,0,0,0.5);overflow-x:auto;}
+        .code-block pre{white-space:pre-wrap;word-break:break-all;}
+        .scroll-reveal{opacity:0;transform:translateY(20px);transition:opacity 0.8s ease-out,transform 0.8s ease-out;will-change:opacity,transform;}
+        .scroll-reveal.visible{opacity:1;transform:translateY(0);}
+        .tab-button.active,.tab-os-button.active{background:linear-gradient(90deg,#3B82F6,#8B5CF6)!important;box-shadow:0 0 10px rgba(124,58,237,0.5)!important;color:#fff!important;}
+    
+        /* --- СТИЛЬ ДЛЯ ДИНАМИЧЕСКИХ ПЕРЕМЕННЫХ --- */
+        .dynamic-var {
+            color: #facc15; /* Tailwind yellow-400 */
+            font-weight: 600;
+        }
+        .param-input {
+            background-color: #111827; /* gray-900 */
+            border: 1px solid #4f46e5; /* indigo-600 */
+            color: #e5e7eb; /* gray-200 */
+            border-radius: 0.5rem; /* rounded-lg */
+            padding: 0.5rem 0.75rem; /* p-2 px-3 */
+            width: 100%;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .param-input:focus {
+            outline: 2px solid #8b5cf6; /* purple-500 */
+            outline-offset: 2px;
+            box-shadow: none;
+            border-color: #8b5cf6;
+        }
+        /* --- СТИЛЬ ДЛЯ "БЛЕДНЫХ" ЗНАЧЕНИЙ --- */
+        .param-input.is-default {
+            color: #6b7280; /* gray-500 */
+            font-style: italic;
+        }
+        .param-input {
+            color: #e5e7eb; /* gray-200 */
+        }
+        
+        /* --- СТИЛИ ДЛЯ ВИЗУАЛЬНОГО КОНСТРУКТОРА --- */
+        .color-picker-wrapper {
+            position: relative;
+            width: 100%;
+            height: 40px;
+            border: 1px solid #4f46e5;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            background-color: #111827;
+        }
+        .color-picker-wrapper label {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+        .color-picker-wrapper input[type="color"] {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 50px; /* Ширина области нажатия */
+            height: 40px;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            /* Убираем стандартный вид input[type=color] */
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background: none;
+        }
+        /* Стилизация ползунка WebKit */
+        .color-picker-wrapper input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+            border: none;
+        }
+        .color-picker-wrapper input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 0 0.375rem 0.375rem 0;
+        }
+        /* Стилизация ползунка Firefox */
+        .color-picker-wrapper input[type="color"]::-moz-color-swatch {
+            border: none;
+            border-radius: 0 0.375rem 0.375rem 0;
+        }
+
+        /* Стили для Preview */
+        .preview-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            background-color: #000000; /* Черный фон для контраста */
+            border: 1px solid #3A3A55;
+            margin-top: 1rem;
+        }
+        .preview-bg {
+            width: 320px; /* Фиксированная ширина для симуляции */
+            padding: 1.5rem;
+            border-radius: 0.25rem;
+            transition: background-color 0.3s ease;
+            font-family: Arial, sans-serif; /* Стандартный шрифт, как на скриншоте */
+        }
+        .preview-box {
+            background-color: #ffffff;
+            padding: 2rem;
+            border-radius: 0.25rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .preview-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 1.5rem;
+        }
+        .preview-input-field {
+            width: 100%;
+            border: 1px solid #d1d5db; /* gray-300 */
+            border-radius: 0.25rem;
+            padding: 0.75rem;
+            font-size: 1rem;
+            color: #333;
+            /* Имитация иконки "глаза" */
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='%239ca3af' class='w-6 h-6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 01-4.23 4.27M3.98 8.223L1.934 12M6.228 6.228L3.98 8.223m0 0l16.04 16.04M6.228 6.228L20.066 19.934' /%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1.25rem;
+        }
+        .preview-checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            margin-top: 1rem;
+            margin-bottom: 1.5rem;
+            color: #333;
+        }
+        .preview-checkbox-wrapper input {
+            width: 1rem;
+            height: 1rem;
+            margin-right: 0.5rem;
+            border: 1px solid #d1d5db;
+        }
+        .preview-button {
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #ffffff;
+            border: none;
+            border-radius: 0.25rem;
+            text-align: center;
+            text-transform: uppercase;
+            transition: background-color 0.3s ease;
+            cursor: default;
+        }
+        /* --- КОНЕЦ СТИЛЕЙ КОНСТРУКТОРА --- */
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+
+    <div class="max-w-4xl mx-auto">
+        
+        <header class="py-6 mb-8 text-center scroll-reveal">
+            <h1 class="text-4xl sm:text-5xl font-extrabold mb-2 accent-glow-text" style="color: transparent; background-image: linear-gradient(90deg, #3B82F6, #8B5CF6); -webkit-background-clip: text; background-clip: text;">
+                Защита Статических Страниц
+            </h1>
+            <p class="text-gray-400 text-lg">Детализированное руководство по клиентской парольной защите</p>
+        </header>
+
+        <!-- 1. СЕКЦИЯ: ИНСТРУКЦИЯ -->
+        <div id="section-instruction" class="main-section">
+            <section id="introduction" class="mb-12 scroll-reveal">
+                <h2 class="text-3xl font-bold mb-6 border-b border-purple-600 pb-2">Обзор Метода</h2>
+                <div class="futuristic-card p-6 rounded-xl">
+                    <p class="text-gray-300 leading-relaxed">
+                        <strong>GitHub Pages</strong> не поддерживает серверную аутентификацию. Чтобы обойти это ограничение, мы будем использовать инструмент <strong>StatiCrypt</strong>, который запускается <strong>на вашем личном компьютере</strong> (не на сервере) и шифрует ваш HTML-файл с помощью алгоритма <strong>AES-256</strong>.
+                    </p>
+                    <p class="text-gray-300 leading-relaxed mt-4">
+                        В результате вы получите готовый, зашифрованный HTML-файл. Когда пользователь откроет его, он увидит только форму для ввода пароля. Расшифровка произойдет мгновенно в его браузере, и сервер GitHub Pages в этом процессе не участвует.
+                    </p>
+                    <div class="mt-4 p-4 bg-yellow-900 bg-opacity-30 rounded-lg text-yellow-300 border border-yellow-700">
+                        <p class="font-bold">⚠️ Важно: Уточнение по серверу</p>
+                        <p class="text-sm">Вам не нужен веб-сервер для этого процесса. <strong>Node.js</strong> и <strong>npm</strong> — это инструменты, которые вы установите на свой компьютер (Windows, macOS или Linux), чтобы запустить программу <strong>StatiCrypt</strong> один раз для шифрования файла.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Пошаговая Инструкция -->
+            <section id="steps" class="mb-12">
+                <h2 class="text-3xl font-bold mb-8 border-b border-purple-600 pb-2">Пошаговое Руководство: StatiCrypt</h2>
+
+                <div class="space-y-8">
+                    
+                    <!-- Шаг 1: Установка Node.js (Подготовка Локальной среды) -->
+                    <div class="futuristic-card p-6 rounded-xl flex items-start space-x-4 scroll-reveal" id="step-1">
+                        <div class="step-number">1</div>
+                        <div>
+                            <h3 class="text-xl font-semibold mb-2">Установка Node.js и npm</h3>
+                            <p class="text-gray-400 mb-4">Для запуска StatiCrypt вам потребуется <strong>среда выполнения Node.js</strong>, которая включает пакетный менеджер <strong>npm</strong>. Выберите вашу операционную систему для получения пошаговой инструкции.</p>
+                            
+                            <!-- Tab Buttons for OS -->
+                            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 mb-4">
+                                <button id="tab-os-win" class="tab-os-button p-3 rounded-lg font-semibold transition duration-300 text-white bg-purple-700 hover:bg-purple-600" onclick="showOSTab('os-win-content', 'tab-os-win')">
+                                    Windows
+                                </button>
+                                <button id="tab-os-mac" class="tab-os-button p-3 rounded-lg text-gray-300 bg-gray-700 hover:bg-gray-600 transition duration-300" onclick="showOSTab('os-mac-content', 'tab-os-mac')">
+                                    macOS
+                                </button>
+                            </div>
+
+                            <!-- Tab Content for OS -->
+                            <div id="os-tab-content">
+                                
+                                <!-- Windows Content -->
+                                <div id="os-win-content" class="os-tab-pane space-y-3 text-gray-400" style="display: block;">
+                                    
+                                    <!-- Nested Tab Buttons for Windows -->
+                                    <div class="flex space-x-3 mb-4 border-b border-gray-700">
+                                        <button id="win-check-btn" class="nested-tab-btn p-2 px-3 rounded-t-lg font-semibold transition duration-300 text-white bg-blue-700" onclick="showInstallationTab('win', 'check')">
+                                            Проверка (Начать здесь)
+                                        </button>
+                                        <button id="win-install-btn" class="nested-tab-btn p-2 px-3 rounded-t-lg text-gray-400 bg-gray-700 hover:bg-gray-600 transition duration-300" onclick="showInstallationTab('win', 'install')">
+                                            Подробная установка
+                                        </button>
+                                    </div>
+
+                                    <!-- Nested Content for Windows: CHECK -->
+                                    <div id="win-check-content" class="nested-tab-pane space-y-3" style="display: block;">
+                                        <p class="font-bold text-white">Шаг 1.1: Проверка наличия Node.js и npm</p>
+                                        <p>Откройте <strong>PowerShell</strong> или <strong>Командную строку</strong> и выполните следующие команды. Это определит, установлены ли необходимые зависимости.</p>
+                                        <div class="code-block p-4 rounded-lg relative">
+                                            <pre><code id="code-win-check">node -v
+npm -v</code></pre>
+                                            <button onclick="copyCode('code-win-check', this)" class="absolute top-2 right-2 p-2 rounded-lg text-white bg-purple-700 hover:bg-purple-600 transition duration-150">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6a2.25 2.25 0 00-2.25 2.25v6" /></svg>
+                                            </button>
+                                        </div>
+                                        <ul class="list-disc list-inside ml-4 space-y-2 text-gray-400">
+                                            <li>✅ <strong>Если вы увидите номера версий</strong> (например, <code>v20.11.0</code> и <code>10.4.0</code>), значит, программы установлены. Вы можете перейти к <a href="#step-2" class="text-purple-400 hover:text-purple-300 underline">Шагу 2</a>.</li>
+                                            <li>❌ <strong>Если вы получите ошибку</strong> (<code>command not found</code> или подобное), перейдите во вкладку <strong>"Подробная установка"</strong>.</li>
+                                        </ul>
+                                        
+                                        <div class="mt-4 p-4 bg-yellow-900 bg-opacity-30 rounded-lg text-yellow-300 border border-yellow-700">
+                                            <p class="font-bold">⚠️ Ошибка PowerShell (UnauthorizedAccess)?</p>
+                                            <p class="text-sm mt-2">Если <code>node -v</code> работает, а <code>npm -v</code> выдает ошибку <code>UnauthorizedAccess</code> (выполнение сценариев отключено), один раз выполните эту команду в PowerShell, <strong>запущенном от имени администратора</strong>:</p>
+                                            <div class="code-block p-4 rounded-lg relative mt-2">
+                                                <pre><code id="code-win-policy">Set-ExecutionPolicy RemoteSigned</code></pre>
+                                                <button onclick="copyCode('code-win-policy', this)" class="absolute top-2 right-2 p-2 rounded-lg text-white bg-purple-700 hover:bg-purple-600 transition duration-150">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6a2.25 2.25 0 00-2.25 2.25v6" /></svg>
+                                                </button>
+                                            </div>
+                                            <p class="text-sm mt-2">Нажмите <code>A</code> (Да для всех) и <code>Enter</code>. После этого снова попробуйте <code>npm -v</code>.</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Nested Content for Windows: INSTALLATION -->
+                                    <div id="win-install-content" class="nested-tab-pane space-y-3" style="display: none;">
+                                        <p class="font-bold text-white mb-2">Метод 1: Использование Установщика (MSI)</p>
+                                        <ol class="list-decimal list-inside ml-4 space-y-2">
+                                            <li>Перейдите на <a href="https://nodejs.org/en/download/" target="_blank" class="text-blue-400 hover:text-blue-300 underline">страницу загрузки Node.js</a>.</li>
+                                            <li>Скачайте <strong>Windows Installer (.msi)</strong> для вашей архитектуры (обычно 64-bit).</li>
+                                            <li>Запустите установщик. Следуйте всем шагам, нажимая "Next". Обязательно убедитесь, что выбрана опция установки <strong>npm package manager</strong>.</li>
+                                        </ol>
+                                        
+                                        <div class="mt-6 p-4 bg-purple-900 bg-opacity-30 rounded-lg border border-purple-700">
+                                            <p class="font-bold text-white mb-2">Метод 2: Использование Командной Строки (PowerShell/Winget)</p>
+                                            <p>Если у вас установлен пакетный менеджер <strong>Winget</strong> (Windows 10/11) или <strong>Chocolatey</strong> (Choco), используйте команду ниже в PowerShell или Командной строке.</p>
+                                            <p class="font-bold text-yellow-300 mt-3 mb-1">Через Winget (рекомендуется для Windows 10/11):</p>
+                                            <div class="code-block p-4 rounded-lg relative">
+                                                <pre><code id="code-win-winget">winget install OpenJS.NodeJS.LTS</code></pre>
+                                                <button onclick="copyCode('code-win-winget', this)" class="absolute top-2 right-2 p-2 rounded-lg text-white bg-purple-700 hover:bg-purple-600 transition duration-150">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6a2.25 2.25 0 00-2.25 2.25v6" /></svg>
+                                                </button>
+                                            </div>
+                                            
+                                            <p class="font-bold text-yellow-300 mt-3 mb-1">Через Chocolatey (если нет Winget):</p>
+                                            <p class="text-sm text-gray-400 mb-2">Если <code>choco</code> не распознано, сначала установите его. <strong>Запустите PowerShell от имени администратора</strong> и выполните:</p>
+                                            <div class="code-block p-4 rounded-lg relative mb-3">
+                                                <pre><code id="code-win-choco-install">Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))</code></pre>
+                                                <button onclick="copyCode('code-win-choco-install', this)" class="absolute top-2 right-2 p-2 rounded-lg text-white bg-purple-700 hover:bg-purple-600 transition duration-150">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6a2.25 2.25 0 00-2.25 2.25v6" /></svg>
+                                                </button>
+                                            </div>
+                                            <p class="text-sm text-gray-400 mb-2">После установки <strong>перезапустите PowerShell</strong> (и, возможно, компьютер, если потребуется), а затем выполните команду для установки Node.js:</p>
+                                            
+                                            <div class="code-block p-4 rounded-lg relative">
+                                                <pre><code id="code-win-choco">choco install nodejs-lts</code></pre>
+                                                <button onclick="copyCode('code-win-choco', this)" class="absolute top-2 right-2 p-2 rounded-lg text-white bg-purple-700 hover:bg-purple-600 transition duration-150">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6a2.25 2.25 0 00-2.25 2.25v6" /></svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p class="mt-4 font-bold text-white">После установки выполните проверку, как в Шаге 1.1, и переходите к <a href="#step-2" class="text-purple-400 hover:text-purple-300 underline">Шагу 2</a>.</p>
+                                    </div>
+                                </div>
+
+                                <!-- macOS Content -->
+                                <div id="os-mac-content" class="os-tab-pane space-y-3 text-gray-400" style="display: none;">
+                                    
+                                    <!-- Nested Tab Buttons for macOS -->
+                                    <div class="flex space-x-3 mb-4 border-b border-gray-700">
+                                        <button id="mac-check-btn" class="nested-tab-btn p-2 px-3 rounded-t-lg font-semibold text-white bg-blue-700 transition duration-300" onclick="showInstallationTab('mac', 'check')">
+                                            Проверка (Начать здесь)
+                                        </button>
+                                        <button id="mac-install-btn" class="nested-tab-btn p-2 px-3 rounded-t-lg text-gray-400 bg-gray-700 hover:bg-gray-600 transition duration-300" onclick="showInstallationTab('mac', 'install')">
+                                            Подробная установка
+                                        </button>
+                                    </div>
+
+                                    <!-- Nested Content for macOS: CHECK -->
+                                    <div id="mac-check-content" class="nested-tab-pane space-y-3" style="display: block;">
+                                        <p class="font-bold text-white">Шаг 1.1: Проверка наличия Node.js и npm</p>
+                                        <p>Откройте <strong>Терминал</strong> и выполните следующие команды. Это определит, установлены ли необходимые зависимости.</p>
+                                        <div class="code-block p-4 rounded-lg relative">
+                                            <pre><code id="code-mac-check">node -v
+npm -v</code></pre>
+                                            <button onclick="copyCode('code-mac-check', this)" class="absolute top-2 right-2 p-2 rounded-lg text-white bg-purple-700 hover:bg-purple-600 transition duration-150">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6a2.25 2.25 0 00-2.25 2.25v6" /></svg>
+                                            </button>
+                                        </div>
+                                        <ul class="list-disc list-inside ml-4 space-y-2 text-gray-400">
+                                            <li>✅ <strong>Если вы увидите номера версий</strong> (например, <code>v20.11.0</code> и <code>10.4.0</code>), значит, программы установлены. Вы можете перейти к <a href="#step-2" class="text-purple-400 hover:text-purple-300 underline">Шагу 2</a>.</li>
+                                            <li>❌ <strong>Если вы получите ошибку</strong> (<code>command not found</code> или подобное), перейдите во вкладку <strong>"Подробная установка"</strong>.</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <!-- Nested Content for macOS: INSTALLATION -->
+                                    <div id="mac-install-content" class="nested-tab-pane space-y-3" style="display: none;">
+                                        <p class="font-bold text-white mb-2">Метод 1: Использование Установщика (PKG)</p>
+                                        <ol class="list-decimal list-inside ml-4 space-y-2">
+                                            <li>Перейдите на <a href="https://nodejs.org/en/download/" target="_blank" class="text-blue-400 hover:text-blue-300 underline">страницу загрузки Node.js</a>.</li>
+                                            <li>Скачайте <strong>macOS Installer (.pkg)</strong>.</li>
+                                            <li>Запустите файл <code>.pkg</code> и следуйте инструкциям на экране.</li>
+                                        </ol>
+
+                                        <div class="mt-6 p-4 bg-purple-900 bg-opacity-30 rounded-lg border border-purple-700">
+                                            <p class="font-bold text-white mb-2">Метод 2: Использование Терминала (Homebrew)</p>
+                                            <p>Если у вас установлен пакетный менеджер <strong>Homebrew</strong> (настоятельно рекомендуется для macOS), используйте эти команды в Терминале. Если Homebrew не установлен, сначала установите его.</p>
+                                            <ol class="list-decimal list-inside ml-4 space-y-2">
+                                                <li>Сначала обновите Homebrew:</li>
+                                                <div class="code-block p-4 rounded-lg relative">
+                                                    <pre><code id="code-mac-brew-update">brew update</code></pre>
+                                                    <button onclick="copyCode('code-mac-brew-update', this)" class="absolute top-2 right-2 p-2 rounded-lg text-white bg-purple-700 hover:bg-purple-600 transition duration-150">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6a2.25 2.25 0 00-2.25 2.25v6" /></svg>
+                                                    </button>
+                                                </div>
+                                                <li>Затем установите Node.js (версию LTS):</li>
+                                                <div class="code-block p-4 rounded-lg relative">
+                                                    <pre><code id="code-mac-brew-install">brew install node</code></pre>
+                                                    <button onclick="copyCode('code-mac-brew-install', this)" class="absolute top-2 right-2 p-2 rounded-lg text-white bg-purple-700 hover:bg-purple-600 transition duration-150">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6a2.25 2.25 0 00-2.25 2.25v6" /></svg>
+                                                    </button>
+                                                </div>
+                                            </ol>
+                                        </div>
+                                        <p class="mt-4 font-bold text-white">После установки выполните проверку, как в Шаге 1.1, и переходите к <a href="#step-2" class="text-purple-400 hover:text-purple-300 underline">Шагу 2</a>.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Шаг 2: Установка StatiCrypt (Локально) -->
+                    <div class="futuristic-card p-6 rounded-xl flex items-start space-x-4 scroll-reveal" id="step-2">
+                        <div class="step-number">2</div>
+                        <div>
+                            <h3 class="text-xl font-semibold mb-2">Установка StatiCrypt</h3>
+                            <p class="text-gray-400 mb-4">Откройте терминал (Command Prompt в Windows или Terminal в Mac/Linux) и выполните эту команду. Она установит StatiCrypt как глобальный инструмент.</p>
+                            <div class="code-block p-4 rounded-lg relative">
+                                <pre><code id="code-2">npm install -g staticrypt</code></pre>
+                                <button onclick="copyCode('code-2', this)" class="absolute top-2 right-2 p-2 rounded-lg text-white bg-purple-700 hover:bg-purple-600 transition duration-150">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6a2.25 2.25 0 00-2.25 2.25v6" /></svg>
+                                </button>
+                            </div>
+                            <p class="text-gray-500 text-sm mt-2">После этого вы можете использовать команду <code>staticrypt</code> в любой папке.</p>
+                        </div>
+                    </div>
+
+                    <!-- ПАНЕЛЬ ДИНАМИЧЕСКИХ ПАРАМЕТРОВ -->
+                    <div class="futuristic-card p-6 rounded-xl flex items-start space-x-4 scroll-reveal" id="step-2-5-params">
+                        <div class="step-number" style="background: linear-gradient(135deg, #f59e0b, #ef4444); box-shadow: 0 0 10px rgba(239, 68, 68, 0.7);">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 0 1 1.45.12l.773.774c.39.39.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.108 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.764.384-.93.78-.165.398-.142.854.108 1.204l.527.738c.32.447.27.96-.12 1.45l-.774.773a1.125 1.125 0 0 1-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.108-.398.165-.71.505-.78.93l-.15.893c-.09.543-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.149-.893c-.07-.425-.384-.764-.78-.93-.398-.164-.854-.142-1.204.108l-.738.527a1.125 1.125 0 0 1-1.45-.12l-.773-.774a1.125 1.125 0 0 1-.12-1.45l.527-.737c.25-.35.272.806.108-1.204-.165-.397-.505.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.11V11.5c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.764-.384.93-.78.165-.398.142-.854-.108-1.204l-.527-.738a1.125 1.125 0 0 1 .12-1.45l.773-.773a1.125 1.125 0 0 1 1.45-.12l.737.527c.35.25.807.272 1.204.108.397-.165.71-.505.78-.93l.15-.893Z" />
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                            </svg>
+                        </div>
+                        <div class="w-full">
+                            <h3 class="text-xl font-semibold mb-4">Динамические Параметры</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="input-folder-path" class="block text-sm font-medium text-gray-300 mb-1">Входная папка</label>
+                                    <input type="text" id="input-folder-path" class="param-input is-default" value="Input-HTML-for-secure-Gitpages">
+                                    <p class="text-xs text-gray-500 mt-1"><strong>Важно:</strong> По умолчанию, путь от домашней директории (<code>~/</code>). Например: <code>/Users/ВашеИмя/Input-HTML...</code></p>
+                                </div>
+                                <div>
+                                    <label for="output-folder-path" class="block text-sm font-medium text-gray-300 mb-1">Выходная папка</label>
+                                    <input type="text" id="output-folder-path" class="param-input is-default" value="Output-HTML-for-secure-Gitpages">
+                                    <p class="text-xs text-gray-500 mt-1"><strong>Важно:</strong> По умолчанию, путь от домашней директории (<code>~/</code>). Например: <code>/Users/ВашеИмя/Output-HTML...</code></p>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <label for="input-password" class="block text-sm font-medium text-gray-300">Пароль</label>
+                                        <button id="generate-pass-btn" type="button" class="text-sm font-medium text-purple-400 hover:text-purple-300 transition-colors duration-200 flex items-center space-x-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                                              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a3 3 0 0 1-3 3m0-3h-3m3 0v3m-3.835 4.165 1.562-1.562a3.375 3.375 0 0 0-4.773-4.773l-1.562 1.562m5.211 4.211-1.562 1.562a3.375 3.375 0 0 1-4.773 4.773l-1.562-1.562m5.211-4.211 1.562-1.562m-5.211 4.211-1.562 1.562m0 0a3.375 3.375 0 0 1-4.773 0M9.75 21a3.375 3.375 0 0 1 0-4.773M14.25 3v.001M14.25 3a3.375 3.375 0 0 0 0 4.773M14.25 3H12m2.25 4.773h-2.25m2.25 0v2.25m-2.25-2.25v-2.25m-2.25 2.25h-2.25m2.25 0v2.25m-2.25-2.25v-2.25m5.211 4.211.39.39m-3.808-3.808.39.39m-3.808 3.808.39.39m-3.808-3.808.39.39m-3.808 3.808.39.39m-3.808-3.808.39.39M9 6h.001M9 6a.75.75 0 0 1 .75.75v.001a.75.75 0 0 1-1.5 0v-.001A.75.75 0 0 1 9 6Zm.001 3.001h-.001M9 9a.75.75 0 0 0-.75.75v.001a.75.75 0 0 0 1.5 0v-.001A.75.75 0 0 0 9 9Zm.001 3.001h-.001M9 12a.75.75 0 0 0-.75.75v.001a.75.75 0 0 0 1.5 0v-.001A.75.75 0 0 0 9 12Zm.001 3.001h-.001M9 15a.75.75 0 0 0-.75.75v.001a.75.75 0 0 0 1.5 0v-.001A.75.75 0 0 0 9 15Zm.001 3.001h-.001M9 18a.75.75 0 0 0-.75.75v.001a.75.75 0 0 0 1.5 0v-.001A.75.75 0 0 0 9 18Z" />
+                                            </svg>
+                                            <span>Сгенерировать</span>
+                                        </button>
+                                    </div>
+                                    <input type="text" id="input-password" class="param-input is-default" value="Ваш_Супер_Сложный_Пароль">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- КОНЕЦ ПАНЕЛИ ПАРАМЕТРОВ -->
+
+                    <!-- НОВЫЙ БЛОК: ВИЗУАЛЬНЫЙ КОНСТРУКТОР (ШАГ 2.7) -->
+                    <div class="futuristic-card p-6 rounded-xl flex items-start space-x-4 scroll-reveal" id="step-2-7-visuals">
+                        <div class="step-number" style="background: linear-gradient(135deg, #10b981, #34d399); box-shadow: 0 0 10px rgba(16, 185, 129, 0.7);">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M4.034 15.118a.09.09 0 01.126.058l.75 1.502a.09.09 0 00.126.058l.75-1.502a.09.09 0 01.126-.058H6.75a.09.09 0 01.058.126l-1.502.75a.09.09 0 00.058.126l1.502.75a.09.09 0 01-.058.126H5.908a.09.09 0 01-.126-.058l-.75-1.502a.09.09 0 00-.126-.058l-.75 1.502a.09.09 0 01-.126.058H3.25a.09.09 0 01-.058-.126l1.502-.75a.09.09 0 00-.058-.126l-1.502-.75a.09.09 0 01.058-.126h.784zM11.25 12.75h.008v.008h-.008v-.008z" />
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M3 18.75V5.25c0-1.242 1.008-2.25 2.25-2.25h13.5c1.242 0 2.25 1.008 2.25 2.25v13.5c0 1.242-1.008 2.25-2.25 2.25H5.25C4.008 21 3 19.992 3 18.75zM8.25 15h7.5M12 17.25V15" />
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 12.75a.75.75 0 100-1.5.75.75 0 000 1.5zM15 11.25a.75.75 0 100-1.5.75.75 0 000 1.5zM15 15a.75.75 0 100-1.5.75.75 0 000 1.5zM15 18.75a.75.75 0 100-1.5.75.75 0 000 1.5zM18.75 11.25a.75.75 0 100-1.5.75.75 0 000 1.5zM18.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zM18.75 18.75a.75.75 0 100-1.5.75.75 0 000 1.5z" />
+                            </svg>
+                        </div>
+                        <div class="w-full">
+                            <h3 class="text-xl font-semibold mb-4">Визуальный Конструктор (Опционально)</h3>
+                            <p class="text-gray-400 text-sm mb-4">Вы можете настроить цвета страницы дешифровки. Выбранные цвета будут автоматически добавлены как флаги <code>--background</code> и <code>--color</code> в команду ниже.</p>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- Панель выбора цветов -->
+                                <div class="space-y-4">
+                                    <div class="color-picker-wrapper">
+                                        <label for="bg-color-picker" class="text-gray-300">Цвет Фона (Secondary)</label>
+                                        <input type="color" id="bg-color-picker" value="#90EE90"> <!-- Зеленый по умолч. -->
+                                    </div>
+                                    <div class="color-picker-wrapper">
+                                        <label for="btn-color-picker" class="text-gray-300">Цвет Кнопки (Primary)</label>
+                                        <input type="color" id="btn-color-picker" value="#22C55E"> <!-- Tailwind green-500 -->
+                                    </div>
+                                    <!-- === НОВАЯ КНОПКА СБРОСА === -->
+                                    <button type="button" id="reset-colors-btn" class="text-sm font-medium text-gray-400 hover:text-purple-300 transition-colors duration-200 flex items-center space-x-1 mt-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                                          <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.183m-4.991-4.992v4.992h-4.992" />
+                                        </svg>
+                                        <span>Сбросить цвета по умолчанию</span>
+                                    </button>
+                                    <!-- === КОНЕЦ НОВОЙ КНОПКИ === -->
+                                </div>
+                                
+                                <!-- Панель Preview -->
+                                <div class="preview-container">
+                                    <div class="preview-bg" id="preview-bg" style="background-color: #90EE90;">
+                                        <div class="preview-box">
+                                            <h2 class="preview-title">Protected Page</h2>
+                                            <input type="text" class="preview-input-field" placeholder="Password">
+                                            <div class="preview-checkbox-wrapper">
+                                                <input type="checkbox" id="preview-check" disabled>
+                                                <label for="preview-check">Remember me</label>
+                                            </div>
+                                            <div class="preview-button" id="preview-btn" style="background-color: #22C55E;">
+                                                DECRYPT
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- КОНЕЦ ВИЗУАЛЬНОГО КОНСТРУКТОРА -->
+
+
+                    <!-- Шаг 3: Шифрование HTML-файлов (Пакетная обработка) -->
+                    <div class="futuristic-card p-6 rounded-xl flex items-start space-x-4 scroll-reveal" id="step-3">
+                        <div class="step-number">3</div>
+                        <div>
+                            <h3 class="text-xl font-semibold mb-2">Шифрование HTML-файлов (Пакетный режим)</h3>
+                            <p class="text-gray-400 mb-4">
+                                Этот обновленный шаг заменяет шифрование одного файла на <strong>пакетную обработку</strong>. Он предполагает, что у вас есть папка <code class="dynamic-var bash-input-path">"Input-HTML-for-secure-Gitpages"</code>, и скрипт создаст <code class="dynamic-var bash-output-path">"Output-HTML-for-secure-Gitpages"</code> с зашифрованными файлами.
+                            </p>
+                            <p class="text-gray-400 mb-4">
+                                Выберите терминал, который вы используете:
+                            </p>
+
+                            <!-- Tab Buttons for Step 3 -->
+                            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 mb-4">
+                                <button id="tab-step3-ps" class="tab-button-step3 tab-button p-3 rounded-lg font-semibold transition duration-300 text-white bg-purple-700 hover:bg-purple-600 active" onclick="showStep3Tab('step3-ps-content', 'tab-step3-ps')">
+                                    PowerShell (Windows)
+                                </button>
+                                <button id="tab-step3-bash" class="tab-button-step3 tab-button p-3 rounded-lg text-gray-300 bg-gray-700 hover:bg-gray-600 transition duration-300" onclick="showStep3Tab('step3-bash-content', 'tab-step3-bash')">
+                                    Git Bash
+                                </button>
+                            </div>
+
+                            <!-- Tab Content for Step 3 -->
+                            <div id="step3-tab-content">
+                                
+                                <!-- PowerShell Content -->
+                                <div id="step3-ps-content" class="tab-pane space-y-3" style="display: block;">
+                                    <h4 class="text-lg font-semibold text-white">Код для PowerShell</h4>
+                                    <p class="text-gray-400 text-sm">Эта единая команда очищает старые файлы, шифрует все из папки 'Input' и переименовывает результат в 'Output'.</p>
+                                    <div class="code-block p-4 rounded-lg relative">
+                                        <pre><code id="code-3-ps">Remove-Item -Path <span class="dynamic-var ps-output-path">.\Output-HTML-for-secure-Gitpages</span> -Recurse -Force -ErrorAction SilentlyContinue; New-Item -ItemType Directory -Path <span class="dynamic-var ps-output-path">.\Output-HTML-for-secure-Gitpages</span> -ErrorAction SilentlyContinue; $Files = Get-ChildItem -Path <span class="dynamic-var ps-input-path">.\Input-HTML-for-secure-Gitpages</span> -File | ForEach-Object { $_.FullName }; npx staticrypt $Files -p <span class="dynamic-var ps-password">'Ваш_Супер_Сложный_Пароль'</span> -d <span class="dynamic-var ps-output-path">.\Output-HTML-for-secure-Gitpages</span> --short -c "<span class="dynamic-var ps-output-path">.\Output-HTML-for-secure-Gitpages</span>\.staticrypt.json"<span class="dynamic-var ps-colors"> --template-color-secondary "#90EE90" --template-color-primary "#22C55E"</span>; Get-ChildItem -Path <span class="dynamic-var ps-output-path">.\Output-HTML-for-secure-Gitpages</span> -Recurse -File -Filter "*.html" | Where-Object { $_.Name -notlike "encrypted_*.html" } | Rename-Item -NewName { "encrypted_" + $_.Name }</code></pre>
+                                        <button onclick="copyCode('code-3-ps', this)" class="absolute top-2 right-2 p-2 rounded-lg text-white bg-purple-700 hover:bg-purple-600 transition duration-150">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6a2.25 2.25 0 00-2.25 2.25v6" /></svg>
+                                        </button>
+                                    </div>
+                                    
+                                    <h4 class="text-lg font-semibold text-white mt-4">Пояснения (из файла)</h4>
+                                    <div class="p-4 bg-gray-900 bg-opacity-50 rounded-lg border border-gray-700 text-gray-400 space-y-2">
+                                        <p class="font-bold text-white">Главные изменения:</p>
+                                        <p><strong>1. Создание переменной ($Files):</strong> Мы сохранили вывод <code>Get-ChildItem</code> в переменную PowerShell.</p>
+                                        <div class="code-block p-2 rounded-lg text-sm"><pre><code>$Files = Get-ChildItem -Path "<span class="dynamic-var ps-input-path">.\Input-HTML-for-secure-Gitpages</span>" -File | ForEach-Object { $_.FullName }</code></pre></div>
+                                        <p>Эта часть собирает полный список файлов в виде массива строк.</p>
+                                        
+                                        <p class="mt-2"><strong>2. Передача списка как аргументов:</strong> Мы передаем эту переменную прямо в команду <code>npx staticrypt</code>.</p>
+                                        <div class="code-block p-2 rounded-lg text-sm"><pre><code>npx staticrypt $Files -p '...' -d '...' ...</code></pre></div>
+                                        <p>PowerShell автоматически "разворачивает" массив <code>$Files</code> в отдельные аргументы командной строки, чего и ожидает staticrypt.</p>
+                                        
+                                        <p class="mt-2"><strong>Эта команда:</strong></p>
+                                        <ul class="list-disc list-inside ml-4">
+                                            <li>Успешно передаст список файлов в staticrypt (решая проблему <code>ERROR: Invalid number of arguments</code>).</li>
+                                            <li>Избежит создания лишней папки <code>Input-HTML-for-secure-Gitpages</code> (потому что мы передаем только файлы, а не папку).</li>
+                                        </ul>
+                                        <p class="mt-2 text-sm text-yellow-300"><strong>P.S.:</strong> Как и ранее, при использовании старой консоли Windows, вам может потребоваться нажать <code>Enter</code> после завершения шифрования <code>npx staticrypt</code>, чтобы заставить консоль выйти из режима паузы и выполнить последний шаг переименования.</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Git Bash Content -->
+                                <div id="step3-bash-content" class="tab-pane space-y-3" style="display: none;">
+                                    <h4 class="text-lg font-semibold text-white">Код для Git Bash</h4>
+                                    <p class="text-gray-400 text-sm">Эта единая команда создает папку вывода, шифрует все файлы из 'Input' и переименовывает результат в 'Output'. (Версия без <code>-r</code>, чтобы избежать вложенности папок).</p>
+                                    <div class="code-block p-4 rounded-lg relative">
+                                        <pre><code id="code-3-bash">mkdir -p <span class="dynamic-var bash-output-path">"Output-HTML-for-secure-Gitpages"</span> && npx staticrypt <span class="dynamic-var bash-input-path">"Input-HTML-for-secure-Gitpages"</span>/* -p <span class="dynamic-var bash-password">'Ваш_Супер_Сложный_Пароль'</span> -d <span class="dynamic-var bash-output-path">"Output-HTML-for-secure-Gitpages"</span> --short -c <span class="dynamic-var bash-output-path">"Output-HTML-for-secure-Gitpages"</span>/.staticrypt.json<span class="dynamic-var bash-colors"> --template-color-secondary "#90EE90" --template-color-primary "#22C55E"</span> && find <span class="dynamic-var bash-output-path">"Output-HTML-for-secure-Gitpages"</span> -type f -name "*.html" -not -name "encrypted_*.html" | while read -r file; do dir=$(dirname "$file"); name=$(basename "$file"); mv "$file" "$dir/encrypted_$name"; done</code></pre>
+                                        <button onclick="copyCode('code-3-bash', this)" class="absolute top-2 right-2 p-2 rounded-lg text-white bg-purple-700 hover:bg-purple-600 transition duration-150">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6a2.25 2.25 0 00-2.25 2.25v6" /></svg>
+                                        </button>
+                                    </div>
+
+                                    <h4 class="text-lg font-semibold text-white mt-4">Пояснения (из файла)</h4>
+                                    <div class="p-4 bg-gray-900 bg-opacity-50 rounded-lg border border-gray-700 text-gray-400 space-y-2">
+                                        <p class="font-bold text-white">Эта команда:</p>
+                                        <ul class="list-disc list-inside ml-4">
+                                            <li>Создаст папку вывода.</li>
+                                            <li>Зашифрует файлы (эта версия не использует <code>-r</code>, чтобы избежать создания лишней папки <code class="dynamic-var bash-input-path">"Input-HTML-for-secure-Gitpages"</code> внутри папки вывода).</li>
+                                            <li>Безопасно переименует все <code>.html</code> файлы, добавляя префикс <code>encrypted_</code> (без двойного переименования).</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </section>
+
+            <!-- Секция Безопасности -->
+            <section id="security-notes" class="mb-12 scroll-reveal">
+                <h2 class="text-3xl font-bold mb-6 border-b border-purple-600 pb-2">Меры Безопасности и Ограничения</h2>
+                <div class="futuristic-card p-6 rounded-xl space-y-4">
+                    <div class="flex items-start space-x-3">
+                        <span class="text-red-500 font-bold text-xl">🚫</span>
+                        <div>
+                            <p class="font-semibold text-lg text-red-400">Не для критичных данных</p>
+                            <p class="text-gray-400">Помните, что ключ дешифрования (пароль) в конечном счете используется в браузере. Для критической информации используйте сервисы, поддерживающие серверную аутентификацию.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <span class="text-yellow-500 font-bold text-xl">🔑</span>
+                        <div>
+                            <p class="font-semibold text-lg text-yellow-400">Сложность Пароля</p>
+                            <p class="text-gray-400">Используйте очень длинный и сложный пароль, так как защита уязвима для атак перебора, если злоумышленник получит зашифрованный файл.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+        
+    </div>
+
+    <script>
+        window.onload=function(){
+            initScrollReveal();
+            showOSTab('os-win-content','tab-os-win');
+            showStep3Tab('step3-ps-content','tab-step3-ps');
+            initDynamicPlaceholders();
+            initVisualConstructor(); // <-- ДОБАВЛЕН ВЫЗОВ
+        };
+        
+        function showOSTab(e,t){
+            document.querySelectorAll("#os-tab-content .os-tab-pane").forEach(el=>{el.style.display="none"});
+            document.querySelectorAll(".tab-os-button").forEach(el=>{el.classList.remove("active","bg-purple-700","hover:bg-purple-600","text-white"),el.classList.add("bg-gray-700","hover:bg-gray-600","text-gray-300")});
+            
+            const targetPane = document.getElementById(e);
+            if(targetPane) targetPane.style.display="block";
+            
+            const o=document.getElementById(t);
+            if(o) {
+                o.classList.add("active","bg-purple-700","hover:bg-purple-600","text-white");
+                o.classList.remove("bg-gray-700","hover:bg-gray-600","text-gray-300");
+                const n=e.startsWith("os-win")?"win":"mac";
+                showInstallationTab(n,"check");
+            }
+        }
+        
+        function showInstallationTab(e,t){
+            const o=e+"-check-content",n=e+"-install-content",l=e+"-check-btn",a=e+"-install-btn";
+            const checkContent = document.getElementById(o);
+            const installContent = document.getElementById(n);
+            if(checkContent) checkContent.style.display="none";
+            if(installContent) installContent.style.display="none";
+            
+            const i=document.getElementById(l),s=document.getElementById(a);
+            if(i && s) {
+                [i,s].forEach(el=>{el.classList.remove("text-white","bg-blue-700"),el.classList.add("text-gray-400","bg-gray-700","hover:bg-gray-600")});
+            }
+            
+            if ("check"===t && checkContent && i) {
+                checkContent.style.display="block";
+                i.classList.remove("text-gray-400","bg-gray-700","hover:bg-gray-600");
+                i.classList.add("text-white","bg-blue-700");
+            } else if ("install"===(t) && installContent && s) {
+                installContent.style.display="block";
+                s.classList.remove("text-gray-400","bg-gray-700","hover:bg-gray-600");
+                s.classList.add("text-white","bg-blue-700");
+            }
+        }
+        
+        function showInnerTab(e,t){
+            // Эта функция больше не используется в onload, но оставлена на случай,
+            // если вы восстановите Шаг 5.
+            const panes = document.querySelectorAll("#tab-content .tab-pane");
+            if (panes.length === 0) return; // Защита, если #tab-content удален
+            
+            panes.forEach(el=>{el.style.display="none"});
+            document.querySelectorAll(".tab-button").forEach(el=>{el.classList.remove("active")});
+            
+            const targetPane = document.getElementById(e);
+            if (targetPane) targetPane.style.display = "block";
+            
+            const targetButton = document.getElementById(t);
+            if (targetButton) targetButton.classList.add("active");
+        }
+        
+        /* --- КОД ДЛЯ ШАГА 3 --- */
+        function showStep3Tab(e, t) {
+            // Скрыть все .tab-pane ВНУТРИ #step3-tab-content
+            document.querySelectorAll("#step3-tab-content .tab-pane").forEach(el => { el.style.display = "none" });
+            
+            // Деактивировать все кнопки .tab-button-step3
+            document.querySelectorAll(".tab-button-step3").forEach(el => {
+                el.classList.remove("active", "bg-purple-700", "hover:bg-purple-600", "text-white");
+                el.classList.add("bg-gray-700", "hover:bg-gray-600", "text-gray-300");
+            });
+            
+            // Показать целевую панель
+            const targetPane = document.getElementById(e);
+            if(targetPane) targetPane.style.display = "block";
+            
+            // Активировать целевую кнопку
+            const o = document.getElementById(t);
+            if(o) {
+                o.classList.add("active", "bg-purple-700", "hover:bg-purple-600", "text-white");
+                o.classList.remove("bg-gray-700", "hover:bg-gray-600", "text-gray-300");
+            }
+        }
+        /* --- КОНЕЦ КОДА ДЛЯ ШАГА 3 --- */
+
+        /* --- КОД ДЛЯ ДИНАМИЧЕСКИХ ПАРАМЕТРОВ --- */
+        function generateStrongPassword() {
+            const length = 24;
+            const lower = "abcdefghijklmnopqrstuvwxyz";
+            const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            const numbers = "0123456789";
+            const symbols = "!@#$%^&*()_+-=[]{}|;:,.<>?";
+            const all = lower + upper + numbers + symbols;
+            
+            let password = "";
+            // Гарантируем по одному символу из каждой группы
+            password += lower[Math.floor(Math.random() * lower.length)];
+            password += upper[Math.floor(Math.random() * upper.length)];
+            password += numbers[Math.floor(Math.random() * numbers.length)];
+            password += symbols[Math.floor(Math.random() * symbols.length)];
+            
+            // Добиваем оставшуюся длину
+            for (let i = 4; i < length; i++) {
+                password += all[Math.floor(Math.random() * all.length)];
+            }
+            
+            // Перемешиваем, чтобы гарантированные символы не были в начале
+            return password.split('').sort(() => 0.5 - Math.random()).join('');
+        }
+
+        function initDynamicPlaceholders() {
+            const inputPathInput = document.getElementById('input-folder-path');
+            const outputPathInput = document.getElementById('output-folder-path');
+            const passwordInput = document.getElementById('input-password');
+            const generateBtn = document.getElementById('generate-pass-btn');
+
+            if (!inputPathInput || !outputPathInput || !passwordInput || !generateBtn) {
+                console.error("Не удалось найти все поля ввода параметров или кнопку.");
+                return;
+            }
+
+            // Получаем ВСЕ span'ы, которые нужно обновить
+            const psInputSpans = document.querySelectorAll('.ps-input-path');
+            const psOutputSpans = document.querySelectorAll('.ps-output-path');
+            const psPassSpans = document.querySelectorAll('.ps-password');
+            
+            const bashInputSpans = document.querySelectorAll('.bash-input-path');
+            const bashOutputSpans = document.querySelectorAll('.bash-output-path');
+            const bashPassSpans = document.querySelectorAll('.bash-password');
+
+            // --- Логика "Бледного" (is-default) текста ---
+            const allInputs = [inputPathInput, outputPathInput, passwordInput];
+            
+            allInputs.forEach(input => {
+                // Сохраняем значение по умолчанию из HTML-атрибута 'value'
+                const defaultValue = input.defaultValue; 
+                
+                input.addEventListener('focus', () => {
+                    input.classList.remove('is-default');
+                });
+                
+                input.addEventListener('blur', () => {
+                    if (input.value === defaultValue || input.value === "") {
+                        // Если пусто, тоже считаем "по умолчанию"
+                        if (input.value === "") input.value = defaultValue;
+                        input.classList.add('is-default');
+                    }
+                });
+                
+                // Также убираем "бледность" при вводе
+                input.addEventListener('input', () => {
+                     if (input.value !== defaultValue && input.value !== "") {
+                        input.classList.remove('is-default');
+                    }
+                });
+            });
+            // --- Конец логики "Бледного" текста ---
+
+
+            // Обработчик для ВХОДНОЙ папки
+            inputPathInput.addEventListener('input', (e) => {
+                const newValue = e.target.value;
+                // Для PowerShell: ".\ПАПКА"
+                psInputSpans.forEach(span => span.innerText = '.\\' + newValue);
+                // Для Bash: "ПАПKA"
+                bashInputSpans.forEach(span => span.innerText = '"' + newValue + '"');
+            });
+
+            // Обработчик для ВЫХОДНОЙ папки
+            outputPathInput.addEventListener('input', (e) => {
+                const newValue = e.target.value;
+                // Для PowerShell: ".\ПАПКА"
+                psOutputSpans.forEach(span => span.innerText = '.\\' + newValue);
+                // Для Bash: "ПАПКА"
+                bashOutputSpans.forEach(span => span.innerText = '"' + newValue + '"');
+            });
+
+            // Обработчик для ПАРОЛЯ
+            passwordInput.addEventListener('input', (e) => {
+                const newValue = e.target.value;
+                const quotedPass = "'" + newValue + "'";
+                psPassSpans.forEach(span => span.innerText = quotedPass);
+                bashPassSpans.forEach(span => span.innerText = quotedPass);
+            });
+
+            // --- Обработчик кнопки генерации ---
+            generateBtn.addEventListener('click', () => {
+                const newPassword = generateStrongPassword();
+                passwordInput.value = newPassword;
+                
+                // Вручную запускаем событие 'input', чтобы обновить код
+                passwordInput.dispatchEvent(new Event('input', { bubbles: true }));
+                
+                // Вручную убираем "бледный" класс
+                passwordInput.classList.remove('is-default');
+            });
+        }
+        /* --- КОНЕЦ КОДА ДЛЯ ПАРАМЕТРОВ --- */
+        
+        /* --- НОВЫЙ КОД ДЛЯ ВИЗУАЛЬНОГО КОНСТРУКТОРА --- */
+        function initVisualConstructor() {
+            // === НОВЫЕ КОНСТАНТЫ ===
+            const DEFAULT_BG = "#90EE90";
+            const DEFAULT_BTN = "#22C55E";
+
+            const bgPicker = document.getElementById('bg-color-picker');
+            const btnPicker = document.getElementById('btn-color-picker');
+            const resetBtn = document.getElementById('reset-colors-btn'); // <-- НОВЫЙ ЭЛЕМЕНТ
+            
+            const previewBg = document.getElementById('preview-bg');
+            const previewBtn = document.getElementById('preview-btn');
+            
+            // Span'ы в коде
+            const psColorSpans = document.querySelectorAll('.ps-colors');
+            const bashColorSpans = document.querySelectorAll('.bash-colors');
+            
+            if (!bgPicker || !btnPicker || !previewBg || !previewBtn || !resetBtn || psColorSpans.length === 0 || bashColorSpans.length === 0) {
+                console.error("Не удалось найти все элементы Визуального Конструктора.");
+                return;
+            }
+
+            function updateColors() {
+                const bgHex = bgPicker.value;
+                const btnHex = btnPicker.value;
+                
+                // 1. Обновить Preview
+                previewBg.style.backgroundColor = bgHex;
+                previewBtn.style.backgroundColor = btnHex;
+                
+                // 2. Обновить код
+                // ИСПРАВЛЕНИЕ: Используем правильные флаги из README
+                const colorFlags = ` --template-color-secondary "${bgHex}" --template-color-primary "${btnHex}"`; 
+                
+                psColorSpans.forEach(span => span.innerText = colorFlags);
+                bashColorSpans.forEach(span => span.innerText = colorFlags);
+            }
+            
+            bgPicker.addEventListener('input', updateColors);
+            btnPicker.addEventListener('input', updateColors);
+
+            // === НОВЫЙ ОБРАБОТЧИК ===
+            resetBtn.addEventListener('click', () => {
+                bgPicker.value = DEFAULT_BG;
+                btnPicker.value = DEFAULT_BTN;
+                // Запускаем обновление, чтобы Preview и код также сбросились
+                updateColors();
+            });
+            // === КОНЕЦ НОВОГО ОБРАБОТЧИКА ===
+        }
+        /* --- КОНЕЦ КОДА КОНСТРУКТОРА --- */
+
+
+        function copyCode(e,t){
+            const o=document.getElementById(e).innerText;
+            const n=document.createElement("textarea");
+            const c='<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6a2.25 2.25 0 00-2.25 2.25v6" /></svg>';
+            n.value=o;
+            document.body.appendChild(n);
+            n.select();
+            try {
+                document.execCommand("copy");
+                t.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-green-400"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>';
+                setTimeout(()=>{t.innerHTML=c},2e3);
+            } catch(e) {
+                console.error("Не удалось скопировать:",e);
+                t.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-red-400"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>';
+                setTimeout(()=>{t.innerHTML=c},2e3);
+            } finally {
+                document.body.removeChild(n);
+            }
+        }
+        
+        function initScrollReveal(){
+            const e_sel=document.querySelectorAll(".scroll-reveal");
+            const t_obs=new IntersectionObserver((entries,observer)=>{
+                entries.forEach(entry=>{
+                    if(entry.isIntersecting){
+                        entry.target.classList.add("visible");
+                        observer.unobserve(entry.target);
+                    }
+                })
+            },{rootMargin:"0px",threshold:.1});
+            e_sel.forEach(el=>{t_obs.observe(el)});
+        }
+    </script>
+</body>
+</html>
+
+
